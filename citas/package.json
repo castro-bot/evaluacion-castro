@@ -1,7 +1,7 @@
 {
   "name": "citas",
   "version": "1.0.0",
-  "description": "Servicio Citas - reservas y notificaciones",
+  "description": "Servicio Citas - reservas",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

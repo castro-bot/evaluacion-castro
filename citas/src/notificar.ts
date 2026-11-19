@@ -13,8 +13,10 @@ export interface ResultadoNotificacion {
 }
 
 /**
- * Abre un socket TCP, envía una línea JSON y espera la confirmación
- * con timeout. Nunca lanza: siempre resuelve con ok/motivo.
+ * Envía un aviso a Notificaciones por TCP (una línea JSON + \n)
+ * y espera la confirmación con timeout.
+ * Patrón basado en enviar-linea.mjs (practica_before_examen1).
+ * Nunca rechaza la promesa: siempre resuelve con { ok, motivo? }.
  */
 export function notificarCitaCreada(
   host: string,
@@ -23,45 +25,35 @@ export function notificarCitaCreada(
   timeoutMs: number
 ): Promise<ResultadoNotificacion> {
   return new Promise((resolve) => {
-    const socket = new net.Socket();
-    let buffer = "";
-    let finalizado = false;
+    let terminado = false;
+    let pendiente = "";
 
     const terminar = (resultado: ResultadoNotificacion) => {
-      if (finalizado) return;
-      finalizado = true;
+      if (terminado) return;
+      terminado = true;
       socket.destroy();
       resolve(resultado);
     };
 
-    socket.setTimeout(timeoutMs);
-
-    socket.once("timeout", () => {
-      terminar({
-        ok: false,
-        motivo: `Notificaciones no respondió en ${timeoutMs} ms`,
-      });
-    });
-
-    socket.once("error", (err: NodeJS.ErrnoException) => {
-      terminar({
-        ok: false,
-        motivo: `No se pudo conectar con Notificaciones (${err.code ?? err.message})`,
-      });
-    });
-
-    socket.connect(port, host, () => {
+    const socket = net.createConnection({ host, port }, () => {
       socket.write(JSON.stringify(aviso) + "\n");
     });
 
-    socket.on("data", (chunk) => {
-      buffer += chunk.toString("utf8");
-      const nl = buffer.indexOf("\n");
-      if (nl === -1) return;
+    socket.setEncoding("utf8");
+    socket.setTimeout(timeoutMs);
 
-      const linea = buffer.slice(0, nl).trim();
+    socket.on("data", (trozo: string) => {
+      pendiente += trozo;
+      const fin = pendiente.indexOf("\n");
+      if (fin === -1) return;
+
+      const linea = pendiente.slice(0, fin);
       try {
-        const resp = JSON.parse(linea) as { ok?: boolean; recibido?: string; error?: string };
+        const resp = JSON.parse(linea) as {
+          ok?: boolean;
+          recibido?: string;
+          error?: string;
+        };
         if (resp.ok === true && resp.recibido === aviso.citaId) {
           terminar({ ok: true });
         } else {
@@ -74,5 +66,23 @@ export function notificarCitaCreada(
         terminar({ ok: false, motivo: "Respuesta de Notificaciones no es JSON válido" });
       }
     });
+
+    socket.on("timeout", () =>
+      terminar({
+        ok: false,
+        motivo: `Notificaciones no respondió en ${timeoutMs} ms`,
+      })
+    );
+
+    socket.on("error", (err: NodeJS.ErrnoException) =>
+      terminar({
+        ok: false,
+        motivo: `No se pudo conectar con Notificaciones (${err.code ?? err.message})`,
+      })
+    );
+
+    socket.on("close", () =>
+      terminar({ ok: false, motivo: "conexión cerrada sin respuesta" })
+    );
   });
 }

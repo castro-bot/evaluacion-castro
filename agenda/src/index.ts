@@ -11,11 +11,11 @@ interface Medico {
 }
 
 const medicos: Medico[] = [
-  { id: "MED-01", nombre: "Dra. Kaori Mizuno", especialidad: "Medicina general", cupos: 20 },
-  { id: "MED-02", nombre: "Dr. Toru Hoshino", especialidad: "Pediatría", cupos: 1 },
-  { id: "MED-03", nombre: "Dr. Renji Okada", especialidad: "Cardiología", cupos: 0 },
-  { id: "MED-04", nombre: "Dra. Aya Fujimoto", especialidad: "Dermatología", cupos: 6 },
-  { id: "MED-05", nombre: "Dr. Kenji Watanabe", especialidad: "Oftalmología", cupos: 4 },
+  { id: "MED-01", nombre: "Dr. Adolfo Castro", especialidad: "Medicina general", cupos: 20 },
+  { id: "MED-02", nombre: "Dr. Adolfo Castro 2", especialidad: "Pediatría", cupos: 1 },
+  { id: "MED-03", nombre: "Dr. Adolfo Castro 3", especialidad: "Cardiología", cupos: 0 },
+  { id: "MED-04", nombre: "Dr. Adolfo Castro 4", especialidad: "Dermatología", cupos: 6 },
+  { id: "MED-05", nombre: "Dr. Adolfo Castro 5", especialidad: "Oftalmología", cupos: 4 },
 ];
 
 const esperar = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
